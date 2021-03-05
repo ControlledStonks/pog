@@ -6,6 +6,7 @@
   "emotes": [
     "PogChamp"
   ],
+  "new_emote_on_startup": false,
   "msg_templates": [
     "{emote} {emote} {emote} {emote} {emote}",
     "{emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote}",

@@ -10,8 +10,11 @@ import twitchio.ext.commands.bot
 
 class SpammerBot(twitchio.ext.commands.bot.Bot):
     def __init__(self, config, *args, **kwargs):
-        self.keep_spamming_channels = True
         self.config = config
+        if self.config['new_emote_on_startup']:
+            self.config['emotes'] = [input('Emote to spam: ')]
+        self.keep_spamming_channels = True
+
         super().__init__(*args, **kwargs)
 
     def get_spam_message(self):
