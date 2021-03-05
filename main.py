@@ -12,13 +12,13 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
     def __init__(self, config, *args, **kwargs):
         self.config = config
         if self.config['new_emote_on_startup']:
-            self.config['emotes'] = [input('Emote to spam: ')]
+            self.config['emote'] = input('Emote to spam: ')
         self.keep_spamming_channels = True
 
         super().__init__(*args, **kwargs)
 
     def get_spam_message(self):
-        if not self.config['emotes']:
+        if not self.config['emote']:
             print('No emotes in config!')
             sys.exit(1)
         if not self.config['msg_templates']:
@@ -26,7 +26,7 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
             sys.exit(2)
 
         template = random.choice(self.config['msg_templates'])
-        emote = random.choice(self.config['emotes'])
+        emote = self.config['emote']
         spam_message = template.format(emote, emote=emote)
 
         return spam_message
