@@ -32,14 +32,18 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
         while self.keep_spamming_channels:
             print(f"{channel} - waiting for {self.config['cooldown_seconds']} seconds")
             await asyncio.sleep(self.config['cooldown_seconds'])
+
             spam_message = self.get_spam_message()
             print(f"{channel} - {spam_message}")
+
             await channel.send(spam_message)
             print(f"{channel} - message sent")
 
-    async def on_ready(self):
+    async def event_ready(self):
         print(f'Ready | {self.nick}')
-        # todo: spool off spam_channel for each joined channel
+        for channel_name in self.initial_channels:
+            channel_object = self.get_channel(channel_name)
+            self.loop.create_task(self.spam_channel(channel_object))
 
     async def event_pubsub(self, data):
         pass
@@ -51,8 +55,12 @@ def main():
 
     twitch_client = SpammerBot(
         config=config,
-        irc_token=config['login']['oauth_token'], nick=config['login']['oauth_token'], prefix='j.',
+        irc_token=config['login']['oauth_token'], nick=config['login']['username'], prefix='j.',
         initial_channels=['ThePogMarket']
     )
     print('Starting')
     twitch_client.run()
+
+
+if __name__ == '__main__':
+    main()

@@ -12,5 +12,6 @@
     "{emote} {emote} {emote} {emote} {emote} {emote}",
     "{emote} {emote} {emote} {emote} {emote} e",
     "e {emote} {emote} {emote} {emote} {emote}"
-  ]
+  ],
+  "cooldown_seconds": 6
 }
