@@ -12,5 +12,8 @@
     "{emote} {emote} {emote} {emote} {emote} e",
     "e {emote} {emote} {emote} {emote} {emote}"
   ],
-  "cooldown_seconds": 6
+  "cooldown_seconds": 6,
+
+  "api_url": "https://api.cmpc.live/emote.json",
+  "api_refresh_interval": 5
 }
