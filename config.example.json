@@ -14,6 +14,7 @@
   ],
   "cooldown_seconds": 6,
 
+  "use_api": true
   "api_url": "https://api.cmpc.live/emote.json",
-  "api_refresh_interval": 5
+  "api_refresh_interval": 60
 }

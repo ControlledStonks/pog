@@ -6,6 +6,7 @@ import time
 import random
 import asyncio
 
+import aiohttp
 import twitchio.ext.commands.bot
 
 
@@ -19,21 +20,29 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
             print('Not enough message templates in config (need >2)!')
             sys.exit(2)
 
-        if self.config['new_emote_on_startup']:
+        if self.config['use_api']:
+            self.last_api_update_time = 0
+            self.prev_emote = self.emote
+        elif self.config['new_emote_on_startup']:
             self.emote = input('Emote to spam: ')
         else:
             self.emote = self.config['emote']
-        self.prev_emote = self.emote
+
 
         self.keep_spamming_channels = True
-        self.last_api_update_time = time.time() // 60
 
         super().__init__(*args, **kwargs)
 
     async def switch_emote(self, new_emote, channel):
+        print(f"Selling old emote and buying new - this will take {self.config['cooldown_seconds'] * 2} seconds")
+        await asyncio.sleep(self.config['cooldown_seconds'])
         await channel.send(f'!sell {self.emote} all')
+
         self.emote, self.prev_emote = new_emote, self.emote
+
+        await asyncio.sleep(self.config['cooldown_seconds'])
         await channel.send(f'!buy {self.emote} all')
+        print(f'Sold old emote {self.prev_emote} and bought new emote {self.emote}')
 
     def get_spam_message(self):
         template = random.choice(self.config['msg_templates'])
@@ -44,8 +53,11 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
     async def update_from_api(self, channel):
         current_time = time.time() // self.config['api_refresh_interval']
         if self.last_api_update_time < current_time:
-            api_response = await self.http.get(self.config['api_url'])
-            new_emote = api_response.json()
+            print('Checking api for new emote...')
+            async with aiohttp.ClientSession(loop=self.loop) as aiohttp_session:
+                async with aiohttp_session.get(self.config['api_url']) as api_response:
+                    new_emote = await api_response.json()
+
             if new_emote != self.emote:
                 print(f'New emote: {new_emote}')
                 await self.switch_emote(new_emote, channel)
@@ -53,7 +65,8 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
 
     async def spam_channel(self, channel):
         while self.keep_spamming_channels:
-            await self.update_from_api(channel)
+            if self.config['use_api']:
+                await self.update_from_api(channel)
 
             print(f"{channel} - waiting for {self.config['cooldown_seconds']} seconds")
             await asyncio.sleep(self.config['cooldown_seconds'])
