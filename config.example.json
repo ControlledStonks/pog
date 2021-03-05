@@ -1,0 +1,16 @@
+{
+  "login": {
+    "username": "ninja",
+    "oauth_token": "oauth:gp6bt4zpkhuc0qo8ghszpm6kdmtlvp"
+  },
+  "emotes": [
+    "PogChamp"
+  ],
+  "msg_templates": [
+    "{emote} {emote} {emote} {emote} {emote}",
+    "{emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote}",
+    "{emote} {emote} {emote} {emote} {emote} {emote}",
+    "{emote} {emote} {emote} {emote} {emote} e",
+    "e {emote} {emote} {emote} {emote} {emote}"
+  ]
+}
