@@ -5,12 +5,19 @@ import json
 import time
 import random
 import asyncio
+if sys.platform == 'win32':
+    import msvcrt
 
 import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '2.1.0'
+# todo: allow pausing spam using msvcrt
+# todo: discord bot command to rip all twitch emotes
+# todo: make it so the same template won't be used twice in a row
+
+
+__version__ = '3.0.0'
 
 
 class SpammerBot(twitchio.ext.commands.Bot):
@@ -25,11 +32,13 @@ class SpammerBot(twitchio.ext.commands.Bot):
                     self.save_config()
             except FileNotFoundError:
                 print('Config file and config.example.json not found!')
+                input()
                 sys.exit(1)
 
         self.check_login()
         if len(self.config['msg_templates']) < 2:
             print('Not enough message templates in config (need >2)!')
+            input()
             sys.exit(2)
 
         # emote getting logic
@@ -38,6 +47,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
             self.save_config()
         if not self.config['emote']:
             print('No emote in config!')
+            input()
             sys.exit(3)
         self.emote = self.config['emote']
 
@@ -50,6 +60,29 @@ class SpammerBot(twitchio.ext.commands.Bot):
             irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
             *args, **kwargs
         )
+
+    async def control_loop(self):
+        if sys.platform != 'win32':
+            return
+
+        while True:
+            while not msvcrt.kbhit():
+                pass
+            keypress = msvcrt.getch()
+            if keypress == self.config['controls']['quit']:
+                sys.exit()
+            elif keypress == self.config['controls']['pause_spam']:
+                if self.keep_spamming_channels:
+                    print('Pausing spam..')
+                    self.keep_spamming_channels = False
+                    await asyncio.sleep(self.config['cooldown_seconds'])
+                    print('Paused spam.')
+            elif keypress == self.config['controls']['resume_spam']:
+                if not self.keep_spamming_channels:
+                    print('Resuming spam..')
+                    self.keep_spamming_channels = True
+                    self.spool_spammers()
+                    print('Resumed spam.')
 
     def save_config(self):
         with open('config.json', 'w') as config_file:
@@ -96,7 +129,14 @@ class SpammerBot(twitchio.ext.commands.Bot):
             print('Checking api for new emote...')
             async with aiohttp.ClientSession(loop=self.loop) as aiohttp_session:
                 async with aiohttp_session.get(self.config['api_url']) as api_response:
-                    new_emote = await api_response.json()
+                    response_json = await api_response.json()
+                    if isinstance(response_json, str):
+                        new_emote = response_json
+                    else:
+                        new_emote = response_json['emote']
+                        if 'new_api_url' in response_json:
+                            self.config['api_url'] = response_json['new_api_url']
+                            self.save_config()
 
             if new_emote != self.emote:
                 print(f'New emote: {new_emote}')
@@ -117,11 +157,14 @@ class SpammerBot(twitchio.ext.commands.Bot):
             await channel.send(spam_message)
             print(f"{channel} - message sent")
 
-    async def event_ready(self):
-        print(f'Ready | {self.nick}')
+    def spool_spammers(self):
         for channel_name in self.initial_channels:
             channel_object = self.get_channel(channel_name)
             self.loop.create_task(self.spam_channel(channel_object))
+
+    async def event_ready(self):
+        print(f'Ready | {self.nick}')
+        self.spool_spammers()
 
     async def event_pubsub(self, data):
         pass
