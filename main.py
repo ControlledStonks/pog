@@ -55,6 +55,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
         self.prev_emote = self.emote
 
         self.keep_spamming_channels = True
+        self.run_control_loop = True
 
         super().__init__(
             irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
@@ -65,7 +66,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
         if sys.platform != 'win32':
             return
 
-        while True:
+        while self.run_control_loop:
             while not msvcrt.kbhit():
                 pass
             keypress = msvcrt.getch()
@@ -165,6 +166,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
     async def event_ready(self):
         print(f'Ready | {self.nick}')
         self.spool_spammers()
+        self.loop.create_task(self.control_loop())
 
     async def event_pubsub(self, data):
         pass
