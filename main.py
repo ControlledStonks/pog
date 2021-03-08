@@ -209,6 +209,7 @@ async def multirun(ctx, *, subcommands):
     print(f'Got multirun command j!multirun {subcommands}')
     if subcommands in macros:
         subcommands = macros[subcommands]()
+        print(f'Converted to macro: {subcommands}')
     for subcommand in subcommands.split(';'):
         subcommand = '!' + subcommand.strip()
         print(f"Waiting for {twitch_client.config['cooldown_seconds']} seconds")
