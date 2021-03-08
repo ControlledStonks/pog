@@ -13,7 +13,7 @@ import twitchio.ext.commands.bot
 __version__ = '2.0.0'
 
 
-class SpammerBot(twitchio.ext.commands.bot.Bot):
+class SpammerBot(twitchio.ext.commands.Bot):
     def __init__(self, config_path, *args, **kwargs):
         try:
             with open(config_path) as config_file:
@@ -127,11 +127,23 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
         pass
 
 
-def main():
-    twitch_client = SpammerBot(config_path='config.json', initial_channels=['ThePogMarket'])
-    print('Starting')
-    twitch_client.run()
+twitch_client = SpammerBot(config_path='config.json', initial_channels=['ThePogMarket'])
+
+
+async def is_bot_user(ctx):
+    return ctx.author.name == twitch_client.nick
+
+
+# noinspection PyTypeChecker
+@twitch_client.command(aliases=['multi'])
+@twitchio.ext.commands.check(is_bot_user)
+async def multirun(ctx, subcommands):
+    for subcommand in subcommands.split(';'):
+        subcommand = '!' + subcommand.strip()
+        await asyncio.sleep(twitch_client.config['cooldown_seconds'])
+        await ctx.send(subcommand)
 
 
 if __name__ == '__main__':
-    main()
+    print('Starting')
+    twitch_client.run()
