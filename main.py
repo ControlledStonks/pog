@@ -13,25 +13,46 @@ import twitchio.ext.commands.bot
 class SpammerBot(twitchio.ext.commands.bot.Bot):
     def __init__(self, config, *args, **kwargs):
         self.config = config
-        if not self.config['emote']:
-            print('No emote in config!')
-            sys.exit(1)
+        self.check_login()
         if len(self.config['msg_templates']) < 2:
             print('Not enough message templates in config (need >2)!')
+            sys.exit(1)
+
+        # emote getting logic
+        if self.config['new_emote_on_startup']:
+            self.config['emote'] = input('Emote to spam: ')
+            self.save_config()
+        if not self.config['emote']:
+            print('No emote in config!')
             sys.exit(2)
+        self.emote = self.config['emote']
 
-        if self.config['use_api']:
-            self.last_api_update_time = 0
-            self.prev_emote = self.emote
-        elif self.config['new_emote_on_startup']:
-            self.emote = input('Emote to spam: ')
-        else:
-            self.emote = self.config['emote']
-
+        self.last_api_update_time = 0
+        self.prev_emote = self.emote
 
         self.keep_spamming_channels = True
 
         super().__init__(*args, **kwargs)
+
+    def save_config(self):
+        with open('config.json', 'w') as config_file:
+            json.dump(self.config, config_file)
+
+    def check_login(self):
+        # check for username and get from input if not present
+        if not self.config['login']['username']:
+            new_username = input('Twitch username: ')
+            self.config['login']['username'] = new_username
+            self.save_config()
+        # check for token and get from input if not present
+        if not self.config['login']['oauth_token']:
+            new_username = input('Twitch oauth token: ')
+            self.config['login']['oauth_token'] = new_username
+            self.save_config()
+        # check for correct prefix on oauth token
+        if not self.config['login']['oauth_token'].startswith('oauth:'):
+            self.config['login']['oauth_token'] = 'oauth:' + self.config['login']['oauth_token']
+            self.save_config()
 
     async def switch_emote(self, new_emote, channel):
         print(f"Selling old emote and buying new - this will take {self.config['cooldown_seconds'] * 2} seconds")
@@ -39,6 +60,8 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
         await channel.send(f'!sell {self.emote} all')
 
         self.emote, self.prev_emote = new_emote, self.emote
+        self.config['emote'] = self.emote
+        self.save_config()
 
         await asyncio.sleep(self.config['cooldown_seconds'])
         await channel.send(f'!buy {self.emote} all')
