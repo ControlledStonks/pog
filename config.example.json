@@ -10,7 +10,9 @@
     "{emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote}",
     "{emote} {emote} {emote} {emote} {emote} {emote}",
     "{emote} {emote} {emote} {emote} {emote} e",
-    "e {emote} {emote} {emote} {emote} {emote}"
+    "e {emote} {emote} {emote} {emote} {emote}",
+    "{emote} {emote} {emote} {emote} {emote} woo",
+    "{emote} {emote} {emote} {emote} {emote} to the moon"
   ],
   "cooldown_seconds": 6,
 
