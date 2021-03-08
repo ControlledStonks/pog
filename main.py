@@ -13,9 +13,9 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
-# todo: allow pausing spam using msvcrt
 # todo: discord bot command to rip all twitch emotes
 # todo: make it so the same template won't be used twice in a row
+# todo: linux support for controls, with getch
 
 
 __version__ = '3.0.0'
@@ -54,6 +54,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
 
         self.last_api_update_time = 0
         self.prev_emote = self.emote
+        self.last_used_template = ''
 
         self.keep_spamming_channels = True
         self.run_control_loop = True
@@ -195,7 +196,14 @@ async def is_bot_user(ctx):
 @twitch_client.command(aliases=['multi'])
 @twitchio.ext.commands.check(is_bot_user)
 async def multirun(ctx, *, subcommands):
+    macros = {
+        'prestige': lambda: 'sell {emote} all; prestige; prestige confirm; buy {emote} all'
+                            .format(emote=twitch_client.emote)
+    }
+
     print(f'Got multirun command j!multirun {subcommands}')
+    if subcommands in macros:
+        subcommands = macros[subcommands]()
     for subcommand in subcommands.split(';'):
         subcommand = '!' + subcommand.strip()
         print(f"Waiting for {twitch_client.config['cooldown_seconds']} seconds")
