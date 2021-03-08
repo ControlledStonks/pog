@@ -129,7 +129,12 @@ class SpammerBot(twitchio.ext.commands.Bot):
         print(f'Sold old emote {self.prev_emote} and bought new emote {self.emote}')
 
     def get_spam_message(self):
-        template = random.choice(self.config['msg_templates'])
+        templates_no_dupe = list(self.config['msg_templates'])
+        try:
+            templates_no_dupe.remove(self.last_used_template)
+        except ValueError:
+            pass
+        template = random.choice(templates_no_dupe)
         spam_message = template.format(self.emote, emote=self.emote)
 
         return spam_message
