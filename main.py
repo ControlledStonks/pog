@@ -10,6 +10,9 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
+__version__ = '2.0.0'
+
+
 class SpammerBot(twitchio.ext.commands.bot.Bot):
     def __init__(self, config_path, *args, **kwargs):
         try:
