@@ -6,6 +6,7 @@ import time
 import random
 import asyncio
 import threading
+import _thread
 if sys.platform == 'win32':
     import msvcrt
 
@@ -58,7 +59,6 @@ class SpammerBot(twitchio.ext.commands.Bot):
 
         self.keep_spamming_channels = True
         self.run_control_loop = True
-        self.quit = False
 
         super().__init__(
             irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
@@ -80,7 +80,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
                 keypress = msvcrt.getch().decode()
                 if keypress == self.config['controls']['quit']:
                     print('Quitting..')
-                    self.quit = True
+                    _thread.interrupt_main()
                     sys.exit()
                 elif keypress == self.config['controls']['pause_spam']:
                     if self.keep_spamming_channels:
@@ -161,9 +161,6 @@ class SpammerBot(twitchio.ext.commands.Bot):
 
     async def spam_channel(self, channel):
         while self.keep_spamming_channels:
-            if self.quit:
-                sys.exit()
-
             if self.config['use_api']:
                 await self.update_from_api(channel)
 
