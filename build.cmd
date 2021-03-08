@@ -1,2 +1,2 @@
 py -m pip install -U pyinstaller
-pyinstaller --name pog main.py
+pyinstaller --onefile --name pog --add-data config.example.json;config.example.json main.py

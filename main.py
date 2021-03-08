@@ -11,12 +11,23 @@ import twitchio.ext.commands.bot
 
 
 class SpammerBot(twitchio.ext.commands.bot.Bot):
-    def __init__(self, config, *args, **kwargs):
-        self.config = config
+    def __init__(self, config_path, *args, **kwargs):
+        try:
+            with open(config_path) as config_file:
+                self.config = json.load(config_file)
+        except FileNotFoundError:
+            try:
+                with open('config.example.json') as config_example_file:
+                    self.config = json.load(config_example_file)
+                    self.save_config()
+            except FileNotFoundError:
+                print('Config file and config.example.json not found!')
+                sys.exit(1)
+
         self.check_login()
         if len(self.config['msg_templates']) < 2:
             print('Not enough message templates in config (need >2)!')
-            sys.exit(1)
+            sys.exit(2)
 
         # emote getting logic
         if self.config['new_emote_on_startup']:
@@ -24,7 +35,7 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
             self.save_config()
         if not self.config['emote']:
             print('No emote in config!')
-            sys.exit(2)
+            sys.exit(3)
         self.emote = self.config['emote']
 
         self.last_api_update_time = 0
@@ -32,7 +43,10 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
 
         self.keep_spamming_channels = True
 
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j.',
+            *args, **kwargs
+        )
 
     def save_config(self):
         with open('config.json', 'w') as config_file:
@@ -111,14 +125,7 @@ class SpammerBot(twitchio.ext.commands.bot.Bot):
 
 
 def main():
-    with open('config.json') as config_file:
-        config = json.load(config_file)
-
-    twitch_client = SpammerBot(
-        config=config,
-        irc_token=config['login']['oauth_token'], nick=config['login']['username'], prefix='j.',
-        initial_channels=['ThePogMarket']
-    )
+    twitch_client = SpammerBot(config_path='config.json', initial_channels=['ThePogMarket'])
     print('Starting')
     twitch_client.run()
 
