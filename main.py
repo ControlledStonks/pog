@@ -138,9 +138,12 @@ async def is_bot_user(ctx):
 @twitch_client.command(aliases=['multi'])
 @twitchio.ext.commands.check(is_bot_user)
 async def multirun(ctx, *, subcommands):
+    print(f'Got multirun command j!multirun {subcommands}')
     for subcommand in subcommands.split(';'):
         subcommand = '!' + subcommand.strip()
+        print(f"Waiting for {twitch_client.config['cooldown_seconds']} seconds")
         await asyncio.sleep(twitch_client.config['cooldown_seconds'])
+        print(f'Sending command {subcommand}')
         await ctx.send(subcommand)
 
 
