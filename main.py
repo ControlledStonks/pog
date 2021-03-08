@@ -10,7 +10,7 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 
 
 class SpammerBot(twitchio.ext.commands.Bot):
@@ -47,7 +47,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
         self.keep_spamming_channels = True
 
         super().__init__(
-            irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j.',
+            irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
             *args, **kwargs
         )
 
@@ -137,7 +137,7 @@ async def is_bot_user(ctx):
 # noinspection PyTypeChecker
 @twitch_client.command(aliases=['multi'])
 @twitchio.ext.commands.check(is_bot_user)
-async def multirun(ctx, subcommands):
+async def multirun(ctx, *, subcommands):
     for subcommand in subcommands.split(';'):
         subcommand = '!' + subcommand.strip()
         await asyncio.sleep(twitch_client.config['cooldown_seconds'])
