@@ -5,6 +5,7 @@ import json
 import time
 import random
 import asyncio
+import threading
 if sys.platform == 'win32':
     import msvcrt
 
@@ -56,34 +57,42 @@ class SpammerBot(twitchio.ext.commands.Bot):
 
         self.keep_spamming_channels = True
         self.run_control_loop = True
+        self.quit = False
 
         super().__init__(
             irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
             *args, **kwargs
         )
 
-    async def control_loop(self):
+    def control_loop(self):
         if sys.platform != 'win32':
             return
 
+        print(
+            f"{self.config['controls']['quit']}: quit\n"
+            f"{self.config['controls']['pause_spam']}: pause spam\n"
+            f"{self.config['controls']['resume_spam']}: resume spam\n"
+            'Customise controls in config.json'
+        )
         while self.run_control_loop:
-            while not msvcrt.kbhit():
-                pass
-            keypress = msvcrt.getch()
-            if keypress == self.config['controls']['quit']:
-                sys.exit()
-            elif keypress == self.config['controls']['pause_spam']:
-                if self.keep_spamming_channels:
-                    print('Pausing spam..')
-                    self.keep_spamming_channels = False
-                    await asyncio.sleep(self.config['cooldown_seconds'])
-                    print('Paused spam.')
-            elif keypress == self.config['controls']['resume_spam']:
-                if not self.keep_spamming_channels:
-                    print('Resuming spam..')
-                    self.keep_spamming_channels = True
-                    self.spool_spammers()
-                    print('Resumed spam.')
+            if msvcrt.kbhit():
+                keypress = msvcrt.getch().decode()
+                if keypress == self.config['controls']['quit']:
+                    print('Quitting..')
+                    self.quit = True
+                    sys.exit()
+                elif keypress == self.config['controls']['pause_spam']:
+                    if self.keep_spamming_channels:
+                        print('Pausing spam..')
+                        self.keep_spamming_channels = False
+                        time.sleep(self.config['cooldown_seconds'])
+                        print('Paused spam.')
+                elif keypress == self.config['controls']['resume_spam']:
+                    if not self.keep_spamming_channels:
+                        print('Resuming spam..')
+                        self.keep_spamming_channels = True
+                        self.spool_spammers()
+                        print('Resumed spam.')
 
     def save_config(self):
         with open('config.json', 'w') as config_file:
@@ -146,6 +155,9 @@ class SpammerBot(twitchio.ext.commands.Bot):
 
     async def spam_channel(self, channel):
         while self.keep_spamming_channels:
+            if self.quit:
+                sys.exit()
+
             if self.config['use_api']:
                 await self.update_from_api(channel)
 
@@ -166,7 +178,7 @@ class SpammerBot(twitchio.ext.commands.Bot):
     async def event_ready(self):
         print(f'Ready | {self.nick}')
         self.spool_spammers()
-        self.loop.create_task(self.control_loop())
+        threading.Thread(target=self.control_loop, daemon=True).start()
 
     async def event_pubsub(self, data):
         pass
