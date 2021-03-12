@@ -19,7 +19,7 @@ import twitchio.ext.commands.bot
 # todo: linux support for controls, with getch
 
 
-__version__ = '3.0.0'
+__version__ = '3.0.1'
 
 
 class SpammerBot(twitchio.ext.commands.Bot):
@@ -69,12 +69,6 @@ class SpammerBot(twitchio.ext.commands.Bot):
         if sys.platform != 'win32':
             return
 
-        print(
-            f"{self.config['controls']['quit']}: quit\n"
-            f"{self.config['controls']['pause_spam']}: pause spam\n"
-            f"{self.config['controls']['resume_spam']}: resume spam\n"
-            'Customise controls in config.json'
-        )
         while self.run_control_loop:
             if msvcrt.kbhit():
                 keypress = msvcrt.getch().decode()
@@ -182,6 +176,12 @@ class SpammerBot(twitchio.ext.commands.Bot):
         print(f'Ready | {self.nick}')
         self.spool_spammers()
         threading.Thread(target=self.control_loop, daemon=True).start()
+        print(
+            f"{self.config['controls']['quit']}: quit\n"
+            f"{self.config['controls']['pause_spam']}: pause spam\n"
+            f"{self.config['controls']['resume_spam']}: resume spam\n"
+            'Customise controls in config.json'
+        )
 
     async def event_pubsub(self, data):
         pass
