@@ -3,12 +3,13 @@
 import sys
 import json
 import asyncio
+import argparse
 
 import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '4.0.1'
+__version__ = '4.1.0'
 
 
 class PogBot(twitchio.ext.commands.Bot):
@@ -144,6 +145,14 @@ async def multirun(ctx, *, subcommands):
         await ctx.send(subcommand)
 
 
-if __name__ == '__main__':
+def main():
+    parser = argparse.ArgumentParser(description='Self-bot for our twitch.tv/ThePogMarket team. Just run it!')
+    parser.add_argument('--version', action='version', version=__version__)
+    parser.parse_args()
+
     print('Starting')
     twitch_client.run()
+
+
+if __name__ == '__main__':
+    main()
