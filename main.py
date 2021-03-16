@@ -2,7 +2,6 @@
 
 import sys
 import json
-import time
 import asyncio
 
 import aiohttp
@@ -38,9 +37,8 @@ class PogBot(twitchio.ext.commands.Bot):
             sys.exit(3)
         self.emote = self.config['emote']
 
-        self.last_api_update_time = 0
         self.prev_emote = self.emote
-        self.last_used_template = ''
+        self.keep_switching_emote = True
 
         super().__init__(
             irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
@@ -84,27 +82,35 @@ class PogBot(twitchio.ext.commands.Bot):
         print(f'Sold old emote {self.prev_emote} and bought, boosted new emote {self.emote}')
 
     async def update_from_api(self, channel):
-        current_time = time.time() // self.config['api_refresh_interval']
-        if self.last_api_update_time < current_time:
-            print('Checking api for new emote...')
-            async with aiohttp.ClientSession(loop=self.loop) as aiohttp_session:
-                async with aiohttp_session.get(self.config['api_url']) as api_response:
-                    response_json = await api_response.json()
-                    if isinstance(response_json, str):
-                        new_emote = response_json
-                    else:
-                        new_emote = response_json['emote']
-                        if 'new_api_url' in response_json:
-                            self.config['api_url'] = response_json['new_api_url']
-                            self.save_config()
+        print('Checking api for new emote...')
+        async with aiohttp.ClientSession(loop=self.loop) as aiohttp_session:
+            async with aiohttp_session.get(self.config['api_url']) as api_response:
+                response_json = await api_response.json()
+                if isinstance(response_json, str):
+                    new_emote = response_json
+                else:
+                    new_emote = response_json['emote']
+                    if 'new_api_url' in response_json:
+                        self.config['api_url'] = response_json['new_api_url']
+                        self.save_config()
 
-            if new_emote != self.emote:
-                print(f'New emote: {new_emote}')
-                await self.switch_emote(new_emote, channel)
-                print('Switched to new emote')
+        if new_emote != self.emote:
+            print(f'New emote: {new_emote}')
+            await self.switch_emote(new_emote, channel)
+            print('Switched to new emote')
+
+    async def run_switcher(self):
+        channel_objects = [self.get_channel(c) for c in self.initial_channels]
+
+        while self.keep_switching_emote:
+            await asyncio.sleep(self.config['api_refresh_interval'])
+            for channel in channel_objects:
+                await self.update_from_api(channel)
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
+
+        self.loop.create_task(self.run_switcher())
 
     async def event_pubsub(self, data):
         pass
