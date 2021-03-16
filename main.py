@@ -8,7 +8,7 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '4.0.0'
+__version__ = '4.0.1'
 
 
 class PogBot(twitchio.ext.commands.Bot):
