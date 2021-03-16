@@ -66,18 +66,18 @@ class PogBot(twitchio.ext.commands.Bot):
             self.save_config()
 
     async def switch_emote(self, new_emote, channel):
-        print(f"Selling old emote and buying new - this will take {self.config['cooldown_seconds'] * 2} seconds")
-        await asyncio.sleep(self.config['cooldown_seconds'])
+        print(f"Selling old emote and buying new - this will take {self.config['slowmode_seconds'] * 3} seconds")
+        await asyncio.sleep(self.config['slowmode_seconds'])
         await channel.send(f'!sell {self.emote} all')
 
         self.emote, self.prev_emote = new_emote, self.emote
         self.config['emote'] = self.emote
         self.save_config()
 
-        await asyncio.sleep(self.config['cooldown_seconds'])
+        await asyncio.sleep(self.config['slowmode_seconds'])
         await channel.send(f'!buy {self.emote} all')
 
-        await asyncio.sleep(self.config['cooldown_seconds'])
+        await asyncio.sleep(self.config['slowmode_seconds'])
         await channel.send(f'!boost {self.emote} {self.emote} {self.emote}')
         print(f'Sold old emote {self.prev_emote} and bought, boosted new emote {self.emote}')
 
@@ -138,8 +138,8 @@ async def multirun(ctx, *, subcommands):
         print(f'Converted to macro: {subcommands}')
     for subcommand in subcommands.split(';'):
         subcommand = '!' + subcommand.strip()
-        print(f"Waiting for {twitch_client.config['cooldown_seconds']} seconds")
-        await asyncio.sleep(twitch_client.config['cooldown_seconds'])
+        print(f"Waiting for {twitch_client.config['slowmode_seconds']} seconds")
+        await asyncio.sleep(twitch_client.config['slowmode_seconds'])
         print(f'Sending command {subcommand}')
         await ctx.send(subcommand)
 
