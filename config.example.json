@@ -5,24 +5,8 @@
   },
   "emote": "PogChamp",
   "new_emote_on_startup": false,
-  "msg_templates": [
-    "{emote} {emote} {emote} {emote} {emote}",
-    "{emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote} {emote}",
-    "{emote} {emote} {emote} {emote} {emote} {emote}",
-    "{emote} {emote} {emote} {emote} {emote} e",
-    "e {emote} {emote} {emote} {emote} {emote}",
-    "{emote} {emote} {emote} {emote} {emote} woo",
-    "{emote} {emote} {emote} {emote} {emote} to the moon"
-  ],
-  "cooldown_seconds": 6,
-
-  "controls": {
-    "quit": "q",
-    "pause_spam": "w",
-    "resume_spam": "e"
-  },
 
   "use_api": true,
   "api_url": "https://the-pog-market-team-api.herokuapp.com/emote.json",
-  "api_refresh_interval": 60
+  "api_refresh_interval": 10
 }
