@@ -2,6 +2,7 @@
 
 import sys
 import json
+import datetime
 import asyncio
 import argparse
 
@@ -9,7 +10,7 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '4.1.0'
+__version__ = '4.2.0'
 
 
 class PogBot(twitchio.ext.commands.Bot):
@@ -100,6 +101,15 @@ class PogBot(twitchio.ext.commands.Bot):
             await self.switch_emote(new_emote, channel)
             print('Switched to new emote')
 
+    async def claim_present(self, channel):
+        utcnow = datetime.datetime.utcnow()
+        days_since_epoch = (utcnow - datetime.datetime(1970, 1, 1)).days
+        if days_since_epoch > self.config['last_present_claim']:
+            self.config['last_present_claim'] = days_since_epoch
+            self.save_config()
+            await channel.send('!present')
+            print(f"Claimed present for {utcnow.strftime('%d/%m/%y')}, at {utcnow.strftime('%H:%M')} (UTC)")
+
     async def run_switcher(self):
         channel_objects = [self.get_channel(c) for c in self.initial_channels]
 
@@ -107,6 +117,7 @@ class PogBot(twitchio.ext.commands.Bot):
             await asyncio.sleep(self.config['api_refresh_interval'])
             for channel in channel_objects:
                 await self.update_from_api(channel)
+                await self.claim_present(channel)
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
