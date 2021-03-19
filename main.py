@@ -86,8 +86,13 @@ class PogBot(twitchio.ext.commands.Bot):
     async def update_from_api(self, channel):
         print('Checking api for new emote...')
         async with aiohttp.ClientSession(loop=self.loop) as aiohttp_session:
-            async with aiohttp_session.get(self.config['api_url']) as api_response:
-                response_json = await api_response.json()
+            try:
+                async with aiohttp_session.get(self.config['api_url']) as api_response:
+                    response_json = await api_response.json()
+            except aiohttp.ClientConnectionError:
+                print('Unable to connect to api')
+                return
+            else:
                 if isinstance(response_json, str):
                     new_emote = response_json
                 else:
