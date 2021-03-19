@@ -112,6 +112,7 @@ class PogBot(twitchio.ext.commands.Bot):
         if days_since_epoch > self.config['last_present_claim']:
             self.config['last_present_claim'] = days_since_epoch
             self.save_config()
+            await asyncio.sleep(self.config['slowmode_seconds'])
             await channel.send('!present')
             print(f"Claimed present for {utcnow.strftime('%d/%m/%y')}, at {utcnow.strftime('%H:%M')} (UTC)")
 
