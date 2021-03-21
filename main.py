@@ -141,6 +141,7 @@ async def is_bot_user(ctx):
     return ctx.author.name == twitch_client.nick
 
 
+# todo: prestige multiple times - standalone command
 # noinspection PyTypeChecker
 @twitch_client.command(aliases=['multi'])
 @twitchio.ext.commands.check(is_bot_user)
