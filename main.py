@@ -10,7 +10,7 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '4.4.0'
+__version__ = '4.4.1'
 
 
 class PogBot(twitchio.ext.commands.Bot):
@@ -163,7 +163,9 @@ async def multirun(ctx, *, subcommands):
         await twitch_client.send(ctx, subcommand)
 
 
+# noinspection PyTypeChecker
 @twitch_client.command(aliases=['prestigec', 'calc'])
+@twitchio.ext.commands.check(is_bot_user)
 async def prestigecalc(ctx, twitchcoin: int):
     if twitchcoin <= 500000:
         return await twitch_client.send(ctx, 'Too few twitchcoin')
@@ -179,7 +181,9 @@ async def prestigecalc(ctx, twitchcoin: int):
     await twitch_client.send(ctx, out_text)
 
 
+# noinspection PyTypeChecker
 @twitch_client.command(aliases=['prestige'])
+@twitchio.ext.commands.check(is_bot_user)
 async def prestigex(ctx, number: int):
     if number < 1:
         return
