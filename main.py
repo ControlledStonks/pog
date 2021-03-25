@@ -10,7 +10,7 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '4.2.0'
+__version__ = '4.3.1'
 
 
 class PogBot(twitchio.ext.commands.Bot):
@@ -47,6 +47,8 @@ class PogBot(twitchio.ext.commands.Bot):
             *args, **kwargs
         )
 
+        self.send_lock = asyncio.Lock(loop=self.loop)
+
     def save_config(self):
         with open('config.json', 'w') as config_file:
             json.dump(self.config, config_file)
@@ -67,20 +69,22 @@ class PogBot(twitchio.ext.commands.Bot):
             self.config['login']['oauth_token'] = 'oauth:' + self.config['login']['oauth_token']
             self.save_config()
 
+    async def send(self, messageable, content):
+        async with self.send_lock:
+            await messageable.send(content)
+            await asyncio.sleep(self.config['slowmode_seconds'])
+
     async def switch_emote(self, new_emote, channel):
         print(f"Selling old emote and buying new - this will take {self.config['slowmode_seconds'] * 3} seconds")
-        await asyncio.sleep(self.config['slowmode_seconds'])
-        await channel.send(f'!sell {self.emote} all')
+        await self.send(channel, f'!sell {self.emote} all')
 
         self.emote, self.prev_emote = new_emote, self.emote
         self.config['emote'] = self.emote
         self.save_config()
 
-        await asyncio.sleep(self.config['slowmode_seconds'])
-        await channel.send(f'!buy {self.emote} all')
+        await self.send(channel, f'!buy {self.emote} all')
 
-        await asyncio.sleep(self.config['slowmode_seconds'])
-        await channel.send(f'!boost {self.emote} {self.emote} {self.emote}')
+        await self.send(channel, f'!boost {self.emote} {self.emote} {self.emote}')
         print(f'Sold old emote {self.prev_emote} and bought, boosted new emote {self.emote}')
 
     async def update_from_api(self, channel):
@@ -112,8 +116,7 @@ class PogBot(twitchio.ext.commands.Bot):
         if days_since_epoch > self.config['last_present_claim']:
             self.config['last_present_claim'] = days_since_epoch
             self.save_config()
-            await asyncio.sleep(self.config['slowmode_seconds'])
-            await channel.send('!present')
+            await self.send(channel, '!present')
             print(f"Claimed present for {utcnow.strftime('%d/%m/%y')}, at {utcnow.strftime('%H:%M')} (UTC)")
 
     async def run_switcher(self):
@@ -157,10 +160,26 @@ async def multirun(ctx, *, subcommands):
         print(f'Converted to macro: {subcommands}')
     for subcommand in subcommands.split(';'):
         subcommand = '!' + subcommand.strip()
-        print(f"Waiting for {twitch_client.config['slowmode_seconds']} seconds")
-        await asyncio.sleep(twitch_client.config['slowmode_seconds'])
         print(f'Sending command {subcommand}')
-        await ctx.send(subcommand)
+        await twitch_client.send(ctx, subcommand)
+
+
+@twitch_client.command()
+async def prestigex(ctx, number: int):
+    if number < 1:
+        return
+
+    print(f'Got prestige command !prestigex {number}')
+    print(f'Prestiging {number} times')
+
+    await twitch_client.send(ctx, f'!sell {twitch_client.emote} all')
+
+    for i in range(number):
+        await twitch_client.send(ctx, f'!prestige')
+        await twitch_client.send(ctx, f'!prestige confirm')
+
+    await twitch_client.send(ctx, f'!buy {twitch_client.emote} all')
+    print(f'Done prestiging {number} times')
 
 
 def main():
