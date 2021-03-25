@@ -10,7 +10,7 @@ import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '4.3.1'
+__version__ = '4.4.0'
 
 
 class PogBot(twitchio.ext.commands.Bot):
@@ -41,13 +41,12 @@ class PogBot(twitchio.ext.commands.Bot):
 
         self.prev_emote = self.emote
         self.keep_switching_emote = True
+        self.send_lock = asyncio.Lock()
 
         super().__init__(
             irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
             *args, **kwargs
         )
-
-        self.send_lock = asyncio.Lock(loop=self.loop)
 
     def save_config(self):
         with open('config.json', 'w') as config_file:
@@ -71,8 +70,8 @@ class PogBot(twitchio.ext.commands.Bot):
 
     async def send(self, messageable, content):
         async with self.send_lock:
-            await messageable.send(content)
             await asyncio.sleep(self.config['slowmode_seconds'])
+            await messageable.send(content)
 
     async def switch_emote(self, new_emote, channel):
         print(f"Selling old emote and buying new - this will take {self.config['slowmode_seconds'] * 3} seconds")
@@ -164,7 +163,23 @@ async def multirun(ctx, *, subcommands):
         await twitch_client.send(ctx, subcommand)
 
 
-@twitch_client.command()
+@twitch_client.command(aliases=['prestigec', 'calc'])
+async def prestigecalc(ctx, twitchcoin: int):
+    if twitchcoin <= 500000:
+        return await twitch_client.send(ctx, 'Too few twitchcoin')
+
+    prestiges = 0
+    remaining = twitchcoin
+    out_text = str(twitchcoin)
+    while remaining > 500000:
+        remaining = int(remaining * 0.7)
+        prestiges += 1
+        out_text += f' -> {prestiges} -> {remaining}'
+
+    await twitch_client.send(ctx, out_text)
+
+
+@twitch_client.command(aliases=['prestige'])
 async def prestigex(ctx, number: int):
     if number < 1:
         return
