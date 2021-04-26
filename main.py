@@ -5,12 +5,13 @@ import json
 import datetime
 import asyncio
 import argparse
+import typing
 
 import aiohttp
 import twitchio.ext.commands.bot
 
 
-__version__ = '4.4.1'
+__version__ = '4.5.0'
 
 
 class PogBot(twitchio.ext.commands.Bot):
@@ -119,13 +120,18 @@ class PogBot(twitchio.ext.commands.Bot):
             print(f"Claimed present for {utcnow.strftime('%d/%m/%y')}, at {utcnow.strftime('%H:%M')} (UTC)")
 
     async def run_switcher(self):
-        channel_objects = [self.get_channel(c) for c in self.initial_channels]
+        channel_objects: typing.List[twitchio.Channel] = [self.get_channel(c) for c in self.initial_channels]
 
         while self.keep_switching_emote:
             await asyncio.sleep(self.config['api_refresh_interval'])
             for channel in channel_objects:
-                await self.update_from_api(channel)
-                await self.claim_present(channel)
+                # check if the channel is live before bothering to do anything
+                if channel.get_stream() is not None:
+                    await self.update_from_api(channel)
+                    await self.claim_present(channel)
+                # todo: sleep for longer if the channel is not live?
+                else:
+                    print(f'Channel {channel.name} is not live, skipping')
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
@@ -139,6 +145,7 @@ class PogBot(twitchio.ext.commands.Bot):
 twitch_client = PogBot(config_path='config.json', initial_channels=['ThePogMarket'])
 
 
+# todo: put these in the class definition instead now I'm sure how to?
 async def is_bot_user(ctx):
     return ctx.author.name == twitch_client.nick
 
