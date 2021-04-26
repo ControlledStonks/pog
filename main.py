@@ -45,7 +45,11 @@ class PogBot(twitchio.ext.commands.Bot):
         self.send_lock = asyncio.Lock()
 
         super().__init__(
-            irc_token=self.config['login']['oauth_token'], nick=self.config['login']['username'], prefix='j!',
+            irc_token='oauth:' + self.config['login']['oauth_token'],
+            api_token=self.config['login']['oauth_token'],
+            client_id=self.config['login']['client_id'],
+            nick=self.config['login']['username'],
+            prefix='j!',
             *args, **kwargs
         )
 
@@ -61,12 +65,12 @@ class PogBot(twitchio.ext.commands.Bot):
             self.save_config()
         # check for token and get from input if not present
         if not self.config['login']['oauth_token']:
-            new_username = input('Twitch oauth token: ')
-            self.config['login']['oauth_token'] = new_username
+            new_oauth = input('Twitch oauth token: ')
+            self.config['login']['oauth_token'] = new_oauth
             self.save_config()
         # check for correct prefix on oauth token
-        if not self.config['login']['oauth_token'].startswith('oauth:'):
-            self.config['login']['oauth_token'] = 'oauth:' + self.config['login']['oauth_token']
+        if self.config['login']['oauth_token'].startswith('oauth:'):
+            self.config['login']['oauth_token'] = self.config['login']['oauth_token'][len('oauth:'):]
             self.save_config()
 
     async def send(self, messageable, content):
@@ -126,7 +130,18 @@ class PogBot(twitchio.ext.commands.Bot):
             await asyncio.sleep(self.config['api_refresh_interval'])
             for channel in channel_objects:
                 # check if the channel is live before bothering to do anything
-                if channel.get_stream() is not None:
+                try:
+                    channel_stream_info = await channel.get_stream()
+                except twitchio.Unauthorized:
+                    print(
+                        f'Unable to check if channel {channel.name} is live, assuming it is.\n'
+                        '  (Check your login client_id in config.json)'
+                    )
+                    channel_live = True
+                else:
+                    channel_live = channel_stream_info is not None
+
+                if channel_live:
                     await self.update_from_api(channel)
                     await self.claim_present(channel)
                 # todo: sleep for longer if the channel is not live?

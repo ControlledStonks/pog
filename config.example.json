@@ -1,7 +1,8 @@
 {
   "login": {
     "username": "",
-    "oauth_token": ""
+    "oauth_token": "",
+    "client_id": "gp762nuuoqcoxypju8c569th9wz7q5"
   },
   "emote": "PogChamp",
   "new_emote_on_startup": false,
